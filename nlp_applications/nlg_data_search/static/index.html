@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Hybrid Recipe Search</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2em auto; padding: 0 1em; }
+    h1 { font-size: 1.4em; }
+    .group-info { background: #f5f5f5; padding: 12px; border-radius: 4px; margin: 1em 0; font-size: 0.85em; }
+    .group-info h3 { margin: 0 0 8px; font-size: 0.95em; }
+    .members-table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+    .members-table th, .members-table td { border: 1px solid #ccc; padding: 5px 10px; text-align: left; }
+    .members-table th { background: #e8e8e8; font-weight: 600; }
+    .members-table td:last-child { text-align: center; }
+    form { display: flex; gap: 8px; margin: 1em 0; }
+    input[type=text] { flex: 1; padding: 8px; font-size: 1em; }
+    button { padding: 8px 16px; font-size: 1em; cursor: pointer; }
+    .hit { border-top: 1px solid #ddd; padding: 12px 0; }
+    .hit h3 { margin: 0 0 4px; font-size: 1.05em; }
+    .hit .meta { color: #666; font-size: 0.85em; }
+    .hit .context { color: #333; font-size: 0.9em; margin-top: 4px; }
+    a { color: #0645ad; }
+  </style>
+</head>
+<body>
+  <h1>Hybrid Recipe Search (BM25 + MiniLM, RRF-fused)</h1>
+  <p>NLP Applications Assignment 1 — Group 108 (Culinary Recipe Databases)</p>
+
+  <div class="group-info">
+    <h3>Group Members:</h3>
+    <table class="members-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Student ID</th>
+          <th>Contribution</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Akhil Kumar</td><td>2024ac05446</td><td>100%</td></tr>
+        <tr><td>Revanth Nandamuri</td><td>2024ac05761</td><td>100%</td></tr>
+        <tr><td>M N Pradeep Gowtham</td><td>2024ac05647</td><td>100%</td></tr>
+        <tr><td>Nakul Ramanathan</td><td>2024ac05356</td><td>100%</td></tr>
+        <tr><td>DHANRAJ SAHOO</td><td>2024AC05620</td><td>100%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <form onsubmit="return runSearch(event);">
+    <input id="q" type="text" value="chocolate chip cookies" required />
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script>
+    async function runSearch(e) {
+      e.preventDefault();
+      const q = document.getElementById("q").value.trim();
+      const r = await fetch("/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q, top_k: 10 }),
+      });
+      const data = await r.json();
+      document.getElementById("results").innerHTML = data.results.map(h => `
+        <div class="hit">
+          <h3>${h.rank}. ${escapeHTML(h.title)}</h3>
+          <div class="meta">score ${h.score.toFixed(4)}${h.link ? ` — <a href="${escapeHTML(h.link)}" target="_blank">source</a>` : ""}</div>
+          <div class="context">${escapeHTML(h.context)}</div>
+        </div>
+      `).join("");
+      return false;
+    }
+    function escapeHTML(s) {
+      return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+    }
+  </script>
+</body>
+</html>
